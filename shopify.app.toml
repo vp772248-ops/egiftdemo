@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "e69e4d7e53fe90268f17a5295bcb1376"
-application_url = "https://egiftdemo.onrender.com"
+application_url = " https://demogift.onrender.com"
 embedded = true
 name = "egift"
 
@@ -54,13 +54,13 @@ api_version = "2027-01"
 
 [auth]
 redirect_urls = [
-  "https://egiftdemo.onrender.com/api/auth",
-  "https://egiftdemo.onrender.com/auth/callback",
-  "https://egiftdemo.onrender.com/auth/shopify/callback"
+  "https://demogift.onrender.com/api/auth",
+  "https://demogift.onrender.com/auth/callback",
+  "https://demogift.onrender.com/auth/shopify/callback"
 ]
 
 [app_proxy]
-url = "https://egiftdemo.onrender.com/app/custom-proxy"
+url = "https://demogift.onrender.com/app/custom-proxy"
 subpath = "public"
 prefix = "apps"
 
