@@ -1,0 +1,316 @@
+<div id="custom-product-extension-{{ block.id }}" style="margin: 0; font-family: inherit;">
+  <!-- Dynamic Form Container -->
+  <div id="single-form-container-{{ block.id }}" style="display: none;"></div>
+</div>
+
+<style>
+  /* Base Container Styling */
+  #custom-product-extension-{{ block.id }} .sp-form-group {
+    margin-bottom: 24px;
+  }
+  #custom-product-extension-{{ block.id }} .sp-form-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #1a2a32;
+    font-family: inherit;
+    line-height: 1.3;
+  }
+  #custom-product-extension-{{ block.id }} .sp-form-hint {
+    font-size: 14px;
+    color: #5d717d;
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+    display: block;
+  }
+
+  /* Input Styling (Matches Gift Message Box) */
+  #custom-product-extension-{{ block.id }} .sp-form-input {
+    width: 100% !important;
+    border: 1px solid #4a5a63 !important;
+    border-radius: 6px !important;
+    background-color: #ffffff !important;
+    padding: 14px 16px !important;
+    font-family: inherit !important;
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+    color: #1a2a32 !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+  }
+  #custom-product-extension-{{ block.id }} .sp-form-input:focus {
+    border-color: #0e3b3a !important;
+    box-shadow: 0 0 0 1px #0e3b3a !important;
+  }
+  
+  /* Textarea Specific */
+  #custom-product-extension-{{ block.id }} textarea.sp-form-input {
+    min-height: 160px !important;
+    resize: vertical !important;
+  }
+  #custom-product-extension-{{ block.id }} .sp-char-counter {
+    text-align: right !important;
+    font-size: 13px !important;
+    color: #333333 !important;
+    margin-top: 8px !important;
+    font-weight: 400 !important;
+  }
+
+  /* Radio / Checkbox Styling */
+  .sp-radio-group { display: flex; flex-direction: column; gap: 10px; }
+  .sp-radio-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 15px; color: #333; }
+  .sp-radio-item input { width: 18px; height: 18px; cursor: pointer; accent-color: #0e3b3a; }
+
+  /* Button Picker (Pills) Styling */
+  .sp-pills-group { display: flex; flex-direction: column; gap: 10px; }
+  .sp-pill-label {
+    display: block;
+    padding: 12px 16px;
+    border: 1px solid #e1e8ed;
+    border-radius: 4px;
+    background: #fff;
+    color: #1a2a32;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .sp-pill-input { display: none; }
+  .sp-pill-input:checked + .sp-pill-label {
+    background: #333;
+    color: #fff;
+    border-color: #333;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const currentProductId = "{{ product.id }}";
+  const blockId = "{{ block.id }}";
+  const shopDomain = window.Shopify && window.Shopify.shop ? window.Shopify.shop : '';
+  
+  const formContainer = document.getElementById(`single-form-container-${blockId}`);
+
+  // Fetch Dynamic Form Fields
+  fetch(`/apps/public?action=get_single_product_form&productId=${currentProductId}&shop=${shopDomain}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.formFields && data.formFields.length > 0) {
+        let html = '';
+        data.formFields.forEach((field, index) => {
+          // Normalize type to lowercase for robust matching
+          const fType = (field.type || "").toLowerCase().trim();
+          html += `<div class="sp-form-group sp-dynamic-field" data-label="${field.label}" data-type="${fType}">`;
+          
+          if (fType.includes('heading')) {
+            html += `<h4 class="sp-form-label">${field.label}</h4></div>`; return;
+          }
+          if (fType.includes('paragraph')) {
+            html += `<p class="sp-form-hint">${field.label}</p></div>`; return;
+          }
+          
+          html += `<label class="sp-form-label">${field.label} ${field.required ? '<span style="color:red">*</span>' : ''}</label>`;
+          
+          const isRequired = field.required ? 'required' : '';
+          
+          // Robustly parse options/choices array
+          let opts = [];
+          if (Array.isArray(field.options)) opts = field.options;
+          else if (Array.isArray(field.choices)) opts = field.choices;
+          else if (typeof field.options === 'string') {
+              try { opts = JSON.parse(field.options); } catch(e) { opts = field.options.split(','); }
+          } else if (typeof field.choices === 'string') {
+              try { opts = JSON.parse(field.choices); } catch(e) { opts = field.choices.split(','); }
+          }
+          
+          // 1. TEXTAREA (Long Answer / Gift Message)
+          if(fType.includes('textarea') || fType.includes('long')) {
+            const hint = field.helpText || "This will appear within the recipient's gift tin";
+            html += `<span class="sp-form-hint">${hint}</span>`;
+            html += `<textarea rows="4" maxlength="300" class="sp-form-input sp-textarea-input" data-input-id="sp-input-${index}" ${isRequired}></textarea>`;
+            html += `<div class="sp-char-counter"><span id="sp-char-count-${index}">0</span>/300 characters</div>`;
+          } 
+          // 2. DROPDOWN (Select)
+          else if(fType.includes('dropdown') || fType.includes('select')) {
+            html += `<select class="sp-form-input" data-input-id="sp-input-${index}" ${isRequired}><option value="">Select an option</option>`;
+            opts.forEach(opt => {
+                const val = (opt.value || opt).trim();
+                html += `<option value="${val}">${val}</option>`;
+            });
+            html += `</select>`;
+          }
+          // 3. PILLS / BUTTON PICKER
+          else if(fType.includes('pill') || fType.includes('button')) {
+             html += `<div class="sp-pills-group">`;
+             opts.forEach((opt, oIdx) => {
+                const val = (opt.value || opt).trim();
+                html += `<label><input type="radio" class="sp-pill-input" name="sp-pills-${index}" value="${val}" ${oIdx===0 && field.required ? 'required' : ''}><span class="sp-pill-label">${val}</span></label>`;
+             });
+             html += `</div>`;
+          }
+          // 4. RADIO / SINGLE CHOICE
+          else if(fType.includes('radio') || fType.includes('single')) {
+             html += `<div class="sp-radio-group">`;
+             opts.forEach((opt, oIdx) => {
+                const val = (opt.value || opt).trim();
+                html += `<label class="sp-radio-item"><input type="radio" name="sp-radio-${index}" value="${val}" ${oIdx===0 && field.required ? 'required' : ''}> ${val}</label>`;
+             });
+             html += `</div>`;
+          }
+          // 5. CHECKBOX / MULTIPLE CHOICE
+          else if(fType.includes('checkbox') || fType.includes('multiple')) {
+             html += `<div class="sp-radio-group">`;
+             opts.forEach((opt) => {
+                const val = (opt.value || opt).trim();
+                html += `<label class="sp-radio-item"><input type="checkbox" name="sp-check-${index}" value="${val}"> ${val}</label>`;
+             });
+             html += `</div>`;
+          }
+          // 6. TEXT (Short Answer) / DATE
+          else {
+            const type = fType.includes('date') ? 'date' : 'text';
+            html += `<input type="${type}" class="sp-form-input" data-input-id="sp-input-${index}" ${isRequired}>`;
+          } 
+
+          html += `</div>`;
+        });
+        
+        formContainer.innerHTML = html;
+        formContainer.style.display = 'block';
+
+        // Bind Textarea Character Counters
+        document.querySelectorAll('.sp-textarea-input').forEach((tx) => {
+          const idx = tx.getAttribute('data-input-id').split('-').pop();
+          tx.addEventListener('input', function() {
+            const counter = document.getElementById(`sp-char-count-${idx}`);
+            if(counter) counter.textContent = this.value.length;
+          });
+        });
+      }
+    })
+    .catch(err => console.error("Error loading Single Product form:", err));
+
+  // Cart interceptor to inject the dynamic app block form fields into the AddToCart payload
+  const originalFetch = window.fetch;
+  window.fetch = async function() {
+    let url = arguments[0];
+    
+    if (typeof url === 'string' && (url.includes('/cart/add.js') || url.includes('/cart/add'))) {
+      let options = arguments[1] || {};
+      
+      if (options.body) {
+        try {
+          let bodyData;
+          if (options.body instanceof FormData) {
+            bodyData = Object.fromEntries(options.body.entries());
+          } else {
+            bodyData = JSON.parse(options.body);
+          }
+
+          let customProperties = {};
+          const formFields = document.querySelectorAll(`#single-form-container-${blockId} .sp-dynamic-field`);
+          
+          formFields.forEach(field => {
+            const label = field.getAttribute('data-label');
+            const type = field.getAttribute('data-type') || "";
+            if (!label) return;
+
+            if (type.includes('radio') || type.includes('single') || type.includes('pill') || type.includes('button')) {
+                const checked = field.querySelector('input[type="radio"]:checked');
+                if (checked && checked.value.trim() !== "") customProperties[label] = checked.value.trim();
+            } 
+            else if (type.includes('checkbox') || type.includes('multiple')) {
+                const checkedBoxes = field.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkedBoxes.length > 0) {
+                    const vals = Array.from(checkedBoxes).map(cb => cb.value.trim());
+                    customProperties[label] = vals.join(', ');
+                }
+            } 
+            else {
+                const input = field.querySelector('.sp-form-input');
+                if (input && input.value.trim() !== "") {
+                  customProperties[label] = input.value.trim();
+                }
+            }
+          });
+
+          // Inject form properties if they exist
+          if (Object.keys(customProperties).length > 0) {
+            let itemsToCart = [];
+            if (bodyData.items) {
+               itemsToCart = bodyData.items;
+               if(itemsToCart.length > 0) {
+                  itemsToCart[0].properties = { ...itemsToCart[0].properties, ...customProperties };
+               }
+            } else {
+               itemsToCart.push({
+                 id: bodyData.id,
+                 quantity: bodyData.quantity || 1,
+                 properties: { ...customProperties }
+               });
+            }
+
+            options.body = JSON.stringify({ items: itemsToCart });
+            
+            if(options.headers) {
+               options.headers['Content-Type'] = 'application/json';
+            }
+          }
+          
+        } catch (e) {
+          console.error("Cart Intercept Error:", e);
+        }
+      }
+    }
+    return originalFetch.apply(this, arguments);
+  };
+});
+</script>
+
+
+{% schema %}
+{
+  "name": "Single Product Message",
+  "target": "section",
+  "templates": ["product"],
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Heading",
+      "default": "Quick Purchase Gift Tin"
+    },
+    {
+      "type": "header",
+      "content": "Important Note"
+    },
+    {
+      "type": "text",
+      "id": "note_text",
+      "label": "Note content",
+      "default": "You or the recipient can customise book preferences..."
+    },
+    {
+      "type": "header",
+      "content": "Perk"
+    },
+    {
+      "type": "text",
+      "id": "perk_title",
+      "label": "Perk title",
+      "default": "SAME DAY DISPATCH ON ORDERS"
+    },
+    {
+      "type": "header",
+      "content": "Why you'll love us"
+    },
+    {
+      "type": "text",
+      "id": "reason",
+      "label": "Reason text",
+      "default": "HAND SELECTED"
+    }
+  ]
+}
+{% endschema %}

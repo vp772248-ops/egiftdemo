@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+// datasource db {
+//   provider = "sqlite"
+//   url      = "file:dev.sqlite"
+// }
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+model GiftSubscription {
+  id              String   @id @default(uuid())
+  orderId         String
+  giftCode        String   @unique
+  gifterEmail     String
+  gifterName      String
+  gifteeEmail     String
+  gifteeName      String
+  giftMessage     String?
+  deliveryDate    DateTime
+  status          String   @default("SCHEDULED_FOR_FUTURE") 
+  renewalCount     Int       @default(0)
+  reminderCount   Int      @default(0)
+  createdAt       DateTime @default(now())
+  isFulfilled     Boolean @default(false)
+  recipientAddress Json?   // Receiver ka address save karne ke liye
+  questionnaire    Json?   // Receiver ki reading tastes save karne ke liye
+  customerId       String? // ✅ NAYA FIELD: Jisne redeem kiya uski Shopify ID
+  variantId        String?  // ✅ NAYA FIELD: Plan ka Shopify Variant ID save karne ke liye
+  expiresAt        DateTime? // ✅ NAYA FIELD: 10 minute baad ka exact time save hoga
+  durationMonths   Int      @default(1)
+  durationDays     Int      @default(0)
+}
+
+model EmailSettings {
+  id                   String @id @default("default")
+  storeDomain          String @default("testteamplatli.myshopify.com")
+  senderEmail          String @default("Willoughby Book Club ")
+ 
+  // 1. Gift Email (to Giftee)
+  giftEmailSubject     String @default("A book subscription gift for you!")
+  giftEmailHtml        String @default("<p>Hi {{name}},</p><p>You have received a gift!</p><p>Message: {{message}}</p><p>Code: <strong>{{code}}</strong></p><br/><a href=\"{{link}}\">REDEEM YOUR GIFT</a>")
+ 
+  // 2. Renewal Success
+  renewalEmailSubject  String @default("Your subscription has been renewed! 🎉")
+  renewalEmailHtml     String @default("<div style=\"text-align: center;\"><h2>Welcome back, {{name}}!</h2><p>Your <strong>{{planName}}</strong> is renewed till <strong>{{expiryDate}}</strong>.</p></div>")
+ 
+  // 3. Reminder Email
+  reminderEmailSubject String @default("Don't forget to redeem your book gift! 🎁")
+  reminderEmailHtml    String @default("<p>Hi {{name}},</p><p>Reminder to redeem your gift!</p><p>Code: <strong>{{code}}</strong></p><br/><a href=\"{{link}}\">REDEEM YOUR GIFT NOW</a>")
+ 
+  // 4. Expiry Email
+  expiryEmailSubject   String @default("Your book subscription has ended 📚")
+  expiryEmailHtml      String @default("<p>Hi {{name}},</p><p>Your <strong>{{planName}}</strong> has officially ended.</p><br/><a href=\"{{link}}\">RENEW NOW</a>")
+ 
+  // 5. Personal Onboarding
+  personalEmailSubject String @default("Set up your Reading Profile! 📚")
+  personalEmailHtml    String @default("<div style=\"text-align: center;\"><h2>Welcome, {{name}}!</h2><a href=\"{{link}}\">Set Up Reading Tastes</a><p>Code: <strong>{{code}}</strong></p></div>")
+ 
+  // 6. Order Confirmation (to Gifter)
+  gifterEmailSubject   String @default("Your gift subscription is confirmed!")
+  gifterEmailHtml      String @default("<p>Hi {{name}},</p><p>Thank you for purchasing a gift for {{gifteeName}}.</p><p>Delivery Date: <strong>{{deliveryDate}}</strong>.</p>")
+}
+
+
+model PlanMapping {
+  id           String   @id @default(uuid())
+  keyword      String   @unique
+  durationQty  Int
+  durationType String   // Isme hum save karenge: "MINUTES", "DAYS", ya "MONTHS"
+  createdAt    DateTime @default(now())
+}
+
+model FormTemplate {
+  id          String   @id @default(uuid())
+  title       String   
+  fields      String  
+  products    String   
+  status      String   @default("Active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SingleProductForm {
+  id        String   @id @default(uuid())
+  title     String
+  status    String   @default("Active")
+  fields    String   
+  products  String   
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AddonTemplate {
+  id           String   @id @default(uuid())
+  title        String
+  status       String   @default("Active")
+  mainProducts String? 
+  addonsData   String?
+  customGiftData String?  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
