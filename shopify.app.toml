@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "e69e4d7e53fe90268f17a5295bcb1376"
-application_url = " https://demogift.onrender.com"
+application_url = "https://demogift.onrender.com"
 embedded = true
 name = "egift"
 

@@ -2,15 +2,15 @@ import nodemailer from 'nodemailer';
 import prisma from "../db.server";
 
 // 🟢 Yahan Apna Gmail aur App Password daalein
-const SENDER_EMAIL = "vamjamohit.vhits@gmail.com"; 
-const SENDER_APP_PASSWORD = "zyqt zytp clls nrgk"; 
+// const SENDER_EMAIL = "vamjamohit.vhits@gmail.com"; 
+// const SENDER_APP_PASSWORD = "zyqt zytp clls nrgk"; 
 
 // Nodemailer Transporter Setup
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: SENDER_EMAIL,
-    pass: SENDER_APP_PASSWORD
+    user: process.env.SMTP_EMAIL,      // Render mathi email lese
+    pass: process.env.SMTP_PASSWORD    // Render mathi password lese
   }
 });
  
