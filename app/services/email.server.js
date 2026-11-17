@@ -7,7 +7,8 @@ import prisma from "../db.server";
 
 // Nodemailer Transporter Setup
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
   auth: {
     user: process.env.SMTP_EMAIL,      // Render mathi email lese
     pass: process.env.SMTP_PASSWORD    // Render mathi password lese
