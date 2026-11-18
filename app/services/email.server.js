@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import prisma from "../db.server";
  
-const resend = new Resend("re_KhTM1nVN_9x5wU8k7GdzZXQEniDt45Pv8");
+const resend = new Resend(process.env.RESEND_API_KEY);
  
 async function getEmailSettings() {
   try {
