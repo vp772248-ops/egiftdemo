@@ -80,7 +80,6 @@ export default function FormBuilderAdvanced() {
   const togglePopoverActive = useCallback(() => setPopoverActive((active) => !active), []);
   const [activeTab, setActiveTab] = useState(0); 
 
-  // 🟢 Custom Inline Message State (Red Box Location)
   const [saveMessage, setSaveMessage] = useState({ text: "", type: "", show: false });
 
   useEffect(() => {
@@ -90,7 +89,6 @@ export default function FormBuilderAdvanced() {
         type: actionData.success ? "success" : "critical",
         show: true
       });
-      // 3 seconds ke baad message hide kar denge
       const timer = setTimeout(() => {
         setSaveMessage(prev => ({ ...prev, show: false }));
       }, 3000);
@@ -120,15 +118,12 @@ export default function FormBuilderAdvanced() {
       newField.label = 'If you are not sure about their reading preferences, check out our ';
       newField.linkText = 'gift tins!';
       newField.linkUrl = '';
-    }
-    else if (type === 'radio_with_textarea') {
-  newField.label = 'Not sure on what to tell us? Choose a prompt!';
-  newField.fieldHelpText = "";
-  newField.required = false;
-  newField.options = [{ value: "Prompt 1" }, { value: "Prompt 2" }];
-// Yahan tak 👆
-}
-    else {
+    } else if (type === 'radio_with_textarea') {
+      newField.label = 'Not sure on what to tell us? Choose a prompt!';
+      newField.fieldHelpText = "";
+      newField.required = false;
+      newField.options = [{ value: "Prompt 1" }, { value: "Prompt 2" }];
+    } else {
       newField.label = type === 'text' ? "Short Answer Question" : 
                        type === 'textarea' ? "Long Answer Question" : 
                        type === 'radio' ? "Single Choice Question" : 
@@ -256,7 +251,6 @@ export default function FormBuilderAdvanced() {
           titleMetadata={
             <InlineStack gap="400" blockAlign="center">
               <Badge tone={status === "Active" ? "success" : "info"}>{status}</Badge>
-              {/* 🟢 RED BOX WALI JAGAH PAR INLINE MESSAGE */}
               {saveMessage.show && (
                 <div style={{
                   background: saveMessage.type === "success" ? "#dcfce3" : "#fee2e2",
@@ -395,7 +389,8 @@ export default function FormBuilderAdvanced() {
                                   </Box>
                                 </InlineStack>
 
-                                {(field.type === 'radio' || field.type === 'checkbox' || field.type === 'dropdown') && (
+                                {/* 👇 NAYA CODE: YAHAN radio_with_textarea JODA GAYA HAI TAAKI OPTION CHOICES DIKHEIN */}
+                                {(field.type === 'radio' || field.type === 'checkbox' || field.type === 'dropdown' || field.type === 'radio_with_textarea') && (
                                   <Box paddingBlockStart="300">
                                     <Text variant="headingSm" as="h4">Option Choices</Text>
                                     <Box paddingBlockStart="200" padding="300" background="bg-surface" borderRadius="200" borderColor="border" borderWidth="025">
@@ -505,14 +500,21 @@ export default function FormBuilderAdvanced() {
                                   {f.options?.map((opt, idx) => <option key={idx}>{opt.value}</option>)}
                                 </select>
                               )}
-                              {(f.type === 'radio' || f.type === 'checkbox') && (
+
+                              {/* 👇 NAYA CODE: YAHAN BHI radio_with_textarea JODA GAYA HAI TAAKI PREVIEW ME DIKHE */}
+                              {(f.type === 'radio' || f.type === 'checkbox' || f.type === 'radio_with_textarea') && (
                                 <BlockStack gap="200">
                                   {f.options?.map((opt, idx) => (
                                     <label key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center', cursor: 'pointer' }}>
-                                      <input type={f.type} disabled />
+                                      <input type={f.type === 'checkbox' ? 'checkbox' : 'radio'} disabled />
                                       <span style={{ fontSize: '13px' }}>{opt.value}</span>
                                     </label>
                                   ))}
+                                  {f.type === 'radio_with_textarea' && (
+                                    <div style={{ marginTop: '5px', padding: '8px', height: '30px', border: '1px solid #ccc', borderRadius: '4px', background: '#f9f9f9', color: '#888', fontSize: '11px' }}>
+                                      Textarea will appear here on click...
+                                    </div>
+                                  )}
                                 </BlockStack>
                               )}
                             </Box>
