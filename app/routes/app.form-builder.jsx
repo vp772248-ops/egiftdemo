@@ -120,7 +120,15 @@ export default function FormBuilderAdvanced() {
       newField.label = 'If you are not sure about their reading preferences, check out our ';
       newField.linkText = 'gift tins!';
       newField.linkUrl = '';
-    } else {
+    }
+    else if (type === 'radio_with_textarea') {
+  newField.label = 'Not sure on what to tell us? Choose a prompt!';
+  newField.fieldHelpText = "";
+  newField.required = false;
+  newField.options = [{ value: "Prompt 1" }, { value: "Prompt 2" }];
+// Yahan tak 👆
+}
+    else {
       newField.label = type === 'text' ? "Short Answer Question" : 
                        type === 'textarea' ? "Long Answer Question" : 
                        type === 'radio' ? "Single Choice Question" : 
@@ -421,6 +429,7 @@ export default function FormBuilderAdvanced() {
                               {content: 'Short Answer (Text)', onAction: () => addField('text')},
                               {content: 'Long Answer (Textarea)', onAction: () => addField('textarea')},
                               {content: 'Single Choice (Radio)', onAction: () => addField('radio')},
+                              {content: 'Radio with Textarea', onAction: () => addField('radio_with_textarea')},
                               {content: 'Multiple Choice (Checkbox)', onAction: () => addField('checkbox')},
                               {content: 'Dropdown List (Select)', onAction: () => addField('dropdown')},
                               {content: 'Date Picker', onAction: () => addField('date')}
