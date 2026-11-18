@@ -38,23 +38,57 @@ export const loader = async ({ request }) => {
         data: { status: "EXPIRED" }
       });
 
-      let productName = "Subscription";
+      let productName = "Book Subscription";
 
       if (admin && sub.orderId) {
         let existingNote = ""; 
 
         try {
           console.log(`🔄 Fetching old notes before EXPIRE for Order: ${sub.orderId}`);
+          
+          // 🟢 FIX: Hum ab 'first: 10' items manga rahe hain taaki main product dhundh sakein (hidden bundles bypass karke)
           const orderQuery = await admin.graphql(
-            `query getOrderDetails($id: ID!) { order(id: $id) { note lineItems(first: 1) { edges { node { title } } } } }`,
+            `query getOrderDetails($id: ID!) { 
+              order(id: $id) { 
+                note 
+                lineItems(first: 10) { 
+                  edges { 
+                    node { 
+                      title 
+                      customAttributes { key value }
+                    } 
+                  } 
+                } 
+              } 
+            }`,
             { variables: { id: `gid://shopify/Order/${sub.orderId}` } }
           );
           const oData = await orderQuery.json();
           
           existingNote = oData.data?.order?.note || ""; 
 
-          if (oData.data?.order?.lineItems?.edges?.[0]?.node?.title) {
-            productName = oData.data.order.lineItems.edges[0].node.title;
+          // 🟢 FIX: Sahi main product dhundhne ka logic
+          if (oData.data?.order?.lineItems?.edges) {
+            for (const edge of oData.data.order.lineItems.edges) {
+              const itemTitle = edge.node.title || "";
+              
+              // Check if item is hidden
+              let isHidden = false;
+              if (edge.node.customAttributes) {
+                for (const attr of edge.node.customAttributes) {
+                  if (attr.key === "_hidden" && attr.value === "true") {
+                    isHidden = true;
+                    break;
+                  }
+                }
+              }
+
+              // Agar hidden nahi hai, aur "bundle" nahi hai, tabhi ise main product manenge
+              if (!isHidden && !itemTitle.toLowerCase().includes("happy bundle")) {
+                productName = itemTitle;
+                break; // Sahi product milte hi loop rok do
+              }
+            }
           }
         } catch (e) { console.error("❌ Failed to fetch old note on expiry."); }
 
@@ -103,7 +137,7 @@ export const loader = async ({ request }) => {
 
       try {
         await sendExpiryEmail(sub.gifteeEmail, sub.gifteeName, productName);
-        console.log(`✅ Expiry Email Sent to ${sub.gifteeEmail}`);
+        console.log(`✅ Expiry Email Sent to ${sub.gifteeEmail} for product: ${productName}`);
       } catch (e) {
         console.error("❌ Failed to send expiry email", e);
       }

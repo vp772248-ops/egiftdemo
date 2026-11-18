@@ -54,18 +54,24 @@ async function processOrderInBackground(payload, shop, initialAdmin) {
     }
 
     // 🟢 MAIN PRODUCT DHUNDNE KE LIYE (Add-ons bypass karna)
+   // 🟢 MAIN PRODUCT DHUNDNE KE LIYE (Add-ons aur Bundles bypass karna)
     let mainProductTitle = "";
     for (const item of payload.line_items) {
        const properties = item.properties || [];
        let isHiddenItem = false;
+       
        properties.forEach(p => {
           if (p.name && p.name.trim().toLowerCase() === "_hidden" && p.value && p.value.toString().trim().toLowerCase() === "true") {
              isHiddenItem = true;
           }
        });
-       if (!isHiddenItem) {
-          mainProductTitle = item.title || "";
-          break; // Pehla non-hidden item milte hi ruk jao
+       
+       const itemTitle = item.title || "";
+       
+       // 🟢 FIX: Agar item hidden nahi hai AUR uske naam me "bundle" nahi hai, tabhi ise main product maano
+       if (!isHiddenItem && !itemTitle.toLowerCase().includes("bundle")) {
+          mainProductTitle = itemTitle;
+          break; // Sahi product milte hi loop rok do
        }
     }
 
